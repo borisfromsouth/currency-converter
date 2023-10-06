@@ -57,9 +57,10 @@
         </StackPanel>
         
         <!-- элементы главного окна -->
-        <!-- PreviewTextInput -  -->
+        <!-- PreviewTextInput - обработчик вводимого текста (не обрабатывает Space) -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Height="90" Width="800" VerticalAlignment="Bottom">
-            <TextBox Name="txtCurrency" Width="200" Height="30" Margin="40 0 0 0" PreviewTextInput="NumberValidationTextBox" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
+            <TextBox Name="txtCurrency" Width="200" Height="30" Margin="40 0 0 0" PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="txtCurrency_PreviewKeyDown" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
+            <!-- MaxDropDownHeight - максимальный размер выпадающего списка -->
             <ComboBox Name="cmbFromCurrency" Width="170" Height="30" Margin="60 0 40 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150"></ComboBox>
             <fa:ImageAwesome Icon="Exchange" Height="30" Width="30" Foreground="White" VerticalAlignment="Top"></fa:ImageAwesome>
             <ComboBox Name="cmbToCurrency" Width="170" Height="30" Margin="40 0 0 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150"></ComboBox>
@@ -67,7 +68,7 @@
         
         <!-- Кнопки -->
         <StackPanel Grid.Row="3" Height="100" Width="1000" Orientation="Horizontal">
-            <Button Name="Convert" Height="40" Width="150" Content="Convert" Click="Convert_Click" Margin="350 0 20 0" Foreground="White" FontSize="20" Style="{StaticResource ButtonRound}">
+            <Button Name="Convert" Height="40" Width="150" Content="Convert" Click="Convert_Click" Margin="300 0 20 0" Foreground="White" FontSize="20" Style="{StaticResource ButtonRound}">
                 <Button.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#ec2075" Offset="0.0"/>
