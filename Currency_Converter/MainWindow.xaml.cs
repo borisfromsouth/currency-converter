@@ -8,6 +8,7 @@ namespace Currency_Converter
     /// Логика взаимодействия для MainWindow.xaml
     /// </summary>
     /// 
+
     // Этот класс is partial потому что состоит из 2 частей - основной(окно) и придаточной(.cs файл)
     public partial class MainWindow : Window
     {
@@ -22,33 +23,50 @@ namespace Currency_Converter
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
             lblCurrency.Content = "";
+            txtCurrency.Text = string.Empty;
+            cmbFromCurrency.SelectedIndex = 0;
+            cmbToCurrency.SelectedIndex = 0;
         }
 
         private void Convert_Click(object sender, RoutedEventArgs e)
         {
-            //Create a variable as ConvertedValue with double data type to store currency converted value
-            //double ConvertedValue;
+            double сonvertedValue; // переменная для хранения введенного количества валют
 
-            if (/*txtCurrency.Text == null || */txtCurrency.Text.Trim() == "")
+            if (txtCurrency.Text.Trim() == "")
             {
                 MessageBox.Show("Please Enter Currency", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                 txtCurrency.Focus();  // поставить фокус на поле ввода валюты
 
                 return;
             }
-            else if (/*cmbFromCurrency.SelectedValue == null || */cmbFromCurrency.SelectedIndex == 0)
+            else if (cmbFromCurrency.SelectedIndex == 0)
             {
                 MessageBox.Show("Please Select Currency From", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                 cmbFromCurrency.Focus();
 
                 return;
             }
-            else if (/*cmbToCurrency.SelectedValue == null || */cmbToCurrency.SelectedIndex == 0)
+            else if (cmbToCurrency.SelectedIndex == 0)
             {
                 MessageBox.Show("Please Select Currency To", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                 cmbToCurrency.Focus();
 
                 return;
+            }
+
+            if(cmbFromCurrency.Text == cmbToCurrency.Text)
+            {
+                сonvertedValue = double.Parse(txtCurrency.Text);
+
+                // N3 - формат дробого числа с 3-мя числами после запятой; по дефолту добавит три нуля после запятой
+                lblCurrency.Content = cmbToCurrency.Text + " " + сonvertedValue.ToString("N3");
+            }
+            else
+            {
+                сonvertedValue = double.Parse(cmbFromCurrency.SelectedValue.ToString()) * 
+                    double.Parse(txtCurrency.Text) / 
+                    double.Parse(cmbToCurrency.SelectedValue.ToString());
+                lblCurrency.Content = cmbToCurrency.Text + " " + сonvertedValue.ToString("N3");
             }
         }
 
@@ -72,6 +90,7 @@ namespace Currency_Converter
             }
         }
 
+        // Заполнение combobox-ов
         private void BindCurrency()
         {
             DataTable btCurrency = new DataTable();
