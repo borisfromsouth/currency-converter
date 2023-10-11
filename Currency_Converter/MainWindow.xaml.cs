@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
@@ -22,10 +23,7 @@ namespace Currency_Converter
 
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
-            lblCurrency.Content = "";
-            txtCurrency.Text = string.Empty;
-            cmbFromCurrency.SelectedIndex = 0;
-            cmbToCurrency.SelectedIndex = 0;
+            ClearControls();
         }
 
         private void Convert_Click(object sender, RoutedEventArgs e)
@@ -72,14 +70,14 @@ namespace Currency_Converter
 
         // Обычно для валидации используются 2 отдельных обработчика событий
         // Первый проверяет введенный текст по нажатию клавиши
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
-        {
-            int val;
-            if (!int.TryParse(e.Text, out val) && e.Text != "-")
-            {
-                e.Handled = true; // отклоняем ввод
-            }
-        }
+        //private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        //{
+        //    int val;
+        //    if (!int.TryParse(e.Text, out val) && e.Text != "-")
+        //    {
+        //        e.Handled = true; // отклоняем ввод
+        //    }
+        //}
 
         // Второй метод обрабатывет именно нажатие клавиши (В частности нам интересено нажатие Space)
         private void txtCurrency_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -117,6 +115,26 @@ namespace Currency_Converter
             cmbToCurrency.DisplayMemberPath = "Text";
             cmbToCurrency.SelectedValuePath = "Value";
             cmbToCurrency.SelectedIndex = 0;
+        }
+
+        private void NumberValidationTextBox(object sendetr, TextCompositionEventArgs e)
+        {
+            // Пояснение по выражению Regex-a
+            // [0-9] - диапазон символов (для букв - [a-v])
+            // ^ - указатель начала строки
+            // + - предыдущий символ повторяется 1 и более раз
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
+        }
+
+        private void ClearControls()
+        {
+            lblCurrency.Content = "";
+            txtCurrency.Text = string.Empty;
+            if (cmbFromCurrency.Items.Count > 0) cmbFromCurrency.SelectedIndex = 0;
+            if (cmbToCurrency.Items.Count > 0) cmbToCurrency.SelectedIndex = 0;
+
+            txtCurrency.Focus();
         }
     }
 }

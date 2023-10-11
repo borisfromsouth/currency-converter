@@ -6,7 +6,7 @@
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         xmlns:local="clr-namespace:Currency_Converter"
         mc:Ignorable="d"
-        Title="Currenct Converter" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen">
+        Title="Currenct Converter" SizeToContent="WidthAndHeight" MinHeight="530" MinWidth="1000" WindowStartupLocation="CenterScreen">
     <!-- SizeToContent подгоняет размер окна под содержимое внутри; !!! однако свойства Height и Width переопределяют его !!! -->
     <Grid>
         <!-- Определяем разметку -->
@@ -15,7 +15,7 @@
             <RowDefinition Height="80"></RowDefinition>
             <RowDefinition Height="150"></RowDefinition>
             <RowDefinition Height="100"></RowDefinition>
-            <RowDefinition Height="150"></RowDefinition>
+            <RowDefinition Height="100"></RowDefinition>
         </Grid.RowDefinitions>
 
         <!-- контур -->
@@ -68,7 +68,7 @@
         
         <!-- Кнопки -->
         <StackPanel Grid.Row="3" Height="100" Width="1000" Orientation="Horizontal">
-            <Button Name="Convert" Height="40" Width="150" Content="Convert" Click="Convert_Click" Margin="300 0 20 0" Foreground="White" FontSize="20" Style="{StaticResource ButtonRound}">
+            <Button Name="Convert" Height="40" Width="150" Content="Convert" Click="Convert_Click" Margin="330 0 20 0" Foreground="White" FontSize="20" Style="{StaticResource ButtonRound}">
                 <Button.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#ec2075" Offset="0.0"/>
@@ -85,8 +85,8 @@
                 </Button.Background>
             </Button>
         </StackPanel>
-        <StackPanel Grid.Row="4" Height="150" Width="800" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
-            <Image Height="100" Width="100" Source="Images\Logo.png" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="350 0"/>
+        <StackPanel Grid.Row="4" Height="100" Width="800" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+            <Image Height="80" Width="80" Source="Images\Logo.png" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="350 0"/>
         </StackPanel>
         
     </Grid>
