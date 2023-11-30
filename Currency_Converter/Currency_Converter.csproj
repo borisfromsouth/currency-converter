@@ -98,7 +98,10 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\bin.png" />
+    <Resource Include="Images\pencil.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\Logo.png" />
   </ItemGroup>
