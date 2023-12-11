@@ -1,6 +1,10 @@
-﻿using System.Data;
+﻿using System;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Currency_Converter
@@ -13,12 +17,30 @@ namespace Currency_Converter
     // Этот класс is partial потому что состоит из 2 частей - основной(окно) и придаточной(.cs файл)
     public partial class MainWindow : Window
     {
+        SqlConnection con = new SqlConnection();
+        SqlCommand cmd = new SqlCommand();
+        SqlDataAdapter adapter = new SqlDataAdapter();
+
+        private int CurrencyId = 0;
+        //private double FromAmount = 0;
+        //private double ToAmount = 0;
+
         public MainWindow()
         {
             InitializeComponent();
 
             BindCurrency();
-            lblCurrency.Content = "Hello World";
+            ReFresher();
+            //lblCurrency.Content = "Hello World";
+        }
+
+        // CRUD - Create, Read, Update, Delete
+
+        private void ConnectDb()
+        {
+            string connect = ConfigurationManager.ConnectionStrings["ConnectionString"].ConnectionString;
+            con = new SqlConnection(connect);
+            con.Open();
         }
 
         private void Clear_Click(object sender, RoutedEventArgs e)
@@ -91,29 +113,51 @@ namespace Currency_Converter
         // Заполнение combobox-ов
         private void BindCurrency()
         {
-            DataTable btCurrency = new DataTable();
+            ConnectDb();
+            DataTable dataTable = new DataTable();
+            cmd = new SqlCommand("Select Id, CurrencyName from Currency_Master", con);
+            cmd.CommandType = CommandType.Text;
+            adapter = new SqlDataAdapter(cmd);
+            adapter.Fill(dataTable);
 
-            btCurrency.Columns.Add("Text");
-            btCurrency.Columns.Add("Value");
+            //dgvCurrency.DataContext = dataTable;
 
-            btCurrency.Rows.Add("--Select--", 0);
-            btCurrency.Rows.Add("INR", 1);
-            btCurrency.Rows.Add("USD", 75);
-            btCurrency.Rows.Add("EUR", 85);
-            btCurrency.Rows.Add("SAR", 20);
-            btCurrency.Rows.Add("POUND", 5);
-            btCurrency.Rows.Add("DEM", 43);
+            // заполняем начальное состояние таблицы
+            DataRow dataRow = dataTable.NewRow();
+            dataRow["Id"] = 0;
+            dataRow["CurrencyName"] = "--SELECT--";
+            dataTable.Rows.InsertAt(dataRow, 0);
 
-            // В источник данных для combobox ставим представление таблицы
-            cmbFromCurrency.ItemsSource = cmbToCurrency.ItemsSource = btCurrency.DefaultView;
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                cmbFromCurrency.ItemsSource = dataTable.DefaultView;
+                cmbToCurrency.ItemsSource = dataTable.DefaultView;
+            }
+            con.Close();
+
+            //DataTable btCurrency = new DataTable();
+
+            //btCurrency.Columns.Add("Text");
+            //btCurrency.Columns.Add("Value");
+
+            //btCurrency.Rows.Add("--Select--", 0);
+            //btCurrency.Rows.Add("INR", 1);
+            //btCurrency.Rows.Add("USD", 75);
+            //btCurrency.Rows.Add("EUR", 85);
+            //btCurrency.Rows.Add("SAR", 20);
+            //btCurrency.Rows.Add("POUND", 5);
+            //btCurrency.Rows.Add("DEM", 43);
+
+            //// В источник данных для combobox ставим представление таблицы
+            //cmbFromCurrency.ItemsSource = cmbToCurrency.ItemsSource = btCurrency.DefaultView;
 
             // делаем привязку объекта таблицы к combobox
-            cmbFromCurrency.DisplayMemberPath = "Text"; // визуальное представление объекта
-            cmbFromCurrency.SelectedValuePath = "Value"; // значение объекта
+            cmbFromCurrency.DisplayMemberPath = "CurrencyName"; // визуальное представление объекта
+            cmbFromCurrency.SelectedValuePath = "Id"; // значение объекта
             cmbFromCurrency.SelectedIndex = 0; // задаем первичное значение combobox
 
-            cmbToCurrency.DisplayMemberPath = "Text";
-            cmbToCurrency.SelectedValuePath = "Value";
+            cmbToCurrency.DisplayMemberPath = "CurrencyName";
+            cmbToCurrency.SelectedValuePath = "Id";
             cmbToCurrency.SelectedIndex = 0;
         }
 
@@ -137,19 +181,154 @@ namespace Currency_Converter
             txtCurrency.Focus();
         }
 
-        private void dgvCurrency_SelectedCellsChanged(object sender, System.Windows.Controls.SelectedCellsChangedEventArgs e)
+        private void dgvCurrency_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
         {
+            try
+            {
+                DataGrid dataGrid = sender as DataGrid;
+                DataRowView rowSelected = dataGrid.CurrentItem as DataRowView;
 
+                if (rowSelected != null && dgvCurrency.Items.Count > 0 && dataGrid.SelectedCells.Count > 0)
+                {
+                    CurrencyId = int.Parse(rowSelected["Id"].ToString());
+
+                    if (dataGrid.SelectedCells[0].Column.DisplayIndex == 0)
+                    {
+                        txtAmount.Text = rowSelected["Amount"].ToString();
+                        txtCurrencyName.Text = rowSelected["CurrencyName"].ToString();
+                        btnSave.Content = "Update";
+                    }
+                    if (dataGrid.SelectedCells[0].Column.DisplayIndex == 1)
+                    {
+                        if (MessageBox.Show("Are you sure you want to delete ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {
+                            ConnectDb();
+                            DataTable dataTable = new DataTable();
+                            cmd = new SqlCommand("DELETE FROM Currency_Master WHERE Id = @Id", con);
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@Id", CurrencyId);
+                            cmd.ExecuteNonQuery();
+                            con.Close();
+
+                            MessageBox.Show("Data delete successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        ReFresher();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message + " Problem with activ row cells", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                if (txtAmount.Text == null || txtAmount.Text.Trim() == string.Empty)
+                {
+                    MessageBox.Show("Please enter amount", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    txtAmount.Focus();
+                    return;
+                }
+                else if (txtCurrencyName.Text == null || txtCurrencyName.Text.Trim() == string.Empty)
+                {
+                    MessageBox.Show("Please enter amount", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    txtCurrencyName.Focus();
+                    return;
+                }
+                else
+                {
+                    if (CurrencyId > 0)
+                    {
+                        if (MessageBox.Show("Are you sure you want to update ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {
+                            ConnectDb();
+                            DataTable dataTable = new DataTable();
+                            cmd = new SqlCommand("UPDATE Currency_Master SET Amount = @Amount, CurrencyName = @CurrencyName WHERE Id = @Id", con);
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@Id", CurrencyId);
+                            cmd.Parameters.AddWithValue("@Amount", txtAmount.Text);
+                            cmd.Parameters.AddWithValue("@CurrencyName", txtCurrencyName.Text);
+                            cmd.ExecuteNonQuery();
+                            con.Close();
 
+                            MessageBox.Show("Data updated successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    else
+                    {
+                        if (MessageBox.Show("Are you sure you want to save ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {
+                            ConnectDb();
+                            DataTable dataTable = new DataTable();
+                            cmd = new SqlCommand("INSERT INTO Currency_Master(Amount, CurrencyName) VALUES(@Amount, @CurrencyName)", con);
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@Amount", txtAmount.Text);
+                            cmd.Parameters.AddWithValue("@CurrencyName", txtCurrencyName.Text);
+                            cmd.ExecuteNonQuery();
+                            con.Close();
+
+                            MessageBox.Show("Data added successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                }
+                ReFresher();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ReFresher()
+        {
+            try
+            {
+                txtAmount.Text = string.Empty;
+                txtCurrencyName.Text = string.Empty;
+                btnSave.Content = "Save";
+                GetData();
+                CurrencyId = 0;
+                BindCurrency();
+                txtAmount.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void GetData()
+        {
+            ConnectDb();
+            DataTable dataTable = new DataTable();
+            cmd = new SqlCommand("SELECT * FROM Currency_Master", con);
+            cmd.CommandType = CommandType.Text;
+            adapter = new SqlDataAdapter(cmd);
+            adapter.Fill(dataTable);
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                dgvCurrency.ItemsSource = dataTable.DefaultView;
+            }
+            else
+            {
+                dgvCurrency.ItemsSource = null;
+            }
+            con.Close();
         }
 
         private void btnCancel_Click(object sender, RoutedEventArgs e)
         {
-
+            try
+            {
+                ReFresher();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
