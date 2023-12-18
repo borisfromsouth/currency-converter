@@ -9,11 +9,6 @@ using System.Windows.Input;
 
 namespace Currency_Converter
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
-    /// 
-
     // Этот класс is partial потому что состоит из 2 частей - основной(окно) и придаточной(.cs файл)
     public partial class MainWindow : Window
     {
@@ -22,8 +17,8 @@ namespace Currency_Converter
         SqlDataAdapter adapter = new SqlDataAdapter();
 
         private int CurrencyId = 0;
-        //private double FromAmount = 0;
-        //private double ToAmount = 0;
+        private double FromAmount = 0;
+        private double ToAmount = 0;
 
         public MainWindow()
         {
@@ -31,7 +26,6 @@ namespace Currency_Converter
 
             BindCurrency();
             ReFresher();
-            //lblCurrency.Content = "Hello World";
         }
 
         // CRUD - Create, Read, Update, Delete
@@ -83,9 +77,7 @@ namespace Currency_Converter
             }
             else
             {
-                сonvertedValue = double.Parse(cmbFromCurrency.SelectedValue.ToString()) * 
-                    double.Parse(txtCurrency.Text) / 
-                    double.Parse(cmbToCurrency.SelectedValue.ToString());
+                сonvertedValue = FromAmount * double.Parse(txtCurrency.Text) / ToAmount;
                 lblCurrency.Content = cmbToCurrency.Text + " " + сonvertedValue.ToString("N3");
             }
         }
@@ -120,8 +112,6 @@ namespace Currency_Converter
             adapter = new SqlDataAdapter(cmd);
             adapter.Fill(dataTable);
 
-            //dgvCurrency.DataContext = dataTable;
-
             // заполняем начальное состояние таблицы
             DataRow dataRow = dataTable.NewRow();
             dataRow["Id"] = 0;
@@ -134,22 +124,6 @@ namespace Currency_Converter
                 cmbToCurrency.ItemsSource = dataTable.DefaultView;
             }
             con.Close();
-
-            //DataTable btCurrency = new DataTable();
-
-            //btCurrency.Columns.Add("Text");
-            //btCurrency.Columns.Add("Value");
-
-            //btCurrency.Rows.Add("--Select--", 0);
-            //btCurrency.Rows.Add("INR", 1);
-            //btCurrency.Rows.Add("USD", 75);
-            //btCurrency.Rows.Add("EUR", 85);
-            //btCurrency.Rows.Add("SAR", 20);
-            //btCurrency.Rows.Add("POUND", 5);
-            //btCurrency.Rows.Add("DEM", 43);
-
-            //// В источник данных для combobox ставим представление таблицы
-            //cmbFromCurrency.ItemsSource = cmbToCurrency.ItemsSource = btCurrency.DefaultView;
 
             // делаем привязку объекта таблицы к combobox
             cmbFromCurrency.DisplayMemberPath = "CurrencyName"; // визуальное представление объекта
@@ -200,8 +174,8 @@ namespace Currency_Converter
                     }
                     if (dataGrid.SelectedCells[0].Column.DisplayIndex == 1)
                     {
-                        if (MessageBox.Show("Are you sure you want to delete ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                        {
+                        /*if (MessageBox.Show("Are you sure you want to delete ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        {*/
                             ConnectDb();
                             DataTable dataTable = new DataTable();
                             cmd = new SqlCommand("DELETE FROM Currency_Master WHERE Id = @Id", con);
@@ -210,8 +184,8 @@ namespace Currency_Converter
                             cmd.ExecuteNonQuery();
                             con.Close();
 
-                            MessageBox.Show("Data delete successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
+                            //MessageBox.Show("Data delete successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        //}
                         ReFresher();
                     }
                 }
@@ -259,8 +233,8 @@ namespace Currency_Converter
                     }
                     else
                     {
-                        if (MessageBox.Show("Are you sure you want to save ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-                        {
+                        //if (MessageBox.Show("Are you sure you want to save ?", "Information", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                        //{
                             ConnectDb();
                             DataTable dataTable = new DataTable();
                             cmd = new SqlCommand("INSERT INTO Currency_Master(Amount, CurrencyName) VALUES(@Amount, @CurrencyName)", con);
@@ -270,8 +244,8 @@ namespace Currency_Converter
                             cmd.ExecuteNonQuery();
                             con.Close();
 
-                            MessageBox.Show("Data added successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
+                            //MessageBox.Show("Data added successfully", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                        //}
                     }
                 }
                 ReFresher();
@@ -328,6 +302,76 @@ namespace Currency_Converter
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void cmbFromCurrency_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (cmbFromCurrency.SelectedValue != null && int.Parse(cmbFromCurrency.SelectedValue.ToString()) != 0 && cmbFromCurrency.SelectedIndex != 0)
+                {
+                    int CurrencyFromId = int.Parse(cmbFromCurrency.SelectedValue.ToString());
+
+                    ConnectDb();
+                    DataTable dataTable = new DataTable();
+
+                    cmd = new SqlCommand("SELECT Amount FROM Currency_Master WHERE Id = @CurrencyFromId", con);
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@CurrencyFromId", CurrencyFromId);
+                    adapter = new SqlDataAdapter(cmd);
+
+                    adapter.Fill(dataTable);
+                    if (dataTable.Rows.Count > 0) FromAmount = double.Parse(dataTable.Rows[0]["Amount"].ToString());
+                    con.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void cmbToCurrency_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (cmbToCurrency.SelectedValue != null && int.Parse(cmbToCurrency.SelectedValue.ToString()) != 0 && cmbToCurrency.SelectedIndex != 0)
+                {
+                    int CurrencyToId = int.Parse(cmbToCurrency.SelectedValue.ToString());
+
+                    ConnectDb();
+                    DataTable dataTable = new DataTable();
+                    cmd = new SqlCommand("SELECT Amount FROM Currency_Master WHERE Id = @CurrencyToId", con);
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.AddWithValue("@CurrencyToId", CurrencyToId);
+
+                    adapter = new SqlDataAdapter(cmd);
+                    adapter.Fill(dataTable);
+
+                    if (dataTable.Rows.Count > 0) ToAmount = double.Parse(dataTable.Rows[0]["Amount"].ToString());
+                    con.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void cmbFromCurrency_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Tab || e.SystemKey == Key.Enter)
+            {
+                cmbFromCurrency_SelectionChanged(sender, null);
+            }
+        }
+
+        private void cmbToCurrency_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Tab || e.SystemKey == Key.Enter)
+            {
+                cmbToCurrency_SelectionChanged(sender, null);
             }
         }
     }

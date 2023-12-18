@@ -66,11 +66,11 @@
                 <!-- элементы главного окна -->
                 <!-- PreviewTextInput - обработчик вводимого текста (не обрабатывает Space) -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Height="90" Width="800" VerticalAlignment="Bottom" Grid.ColumnSpan="2" Margin="100,0,0,0">
-                    <TextBox Name="txtCurrency" Width="200" Height="30" Margin="40 0 0 0" PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="txtCurrency_PreviewKeyDown" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
+                    <TextBox Name="txtCurrency" Width="200" Height="30" Margin="40 0 0 0" PreviewTextInput="NumberValidationTextBox" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
                     <!-- MaxDropDownHeight - максимальный размер выпадающего списка -->
-                    <ComboBox Name="cmbFromCurrency" Width="170" Height="30" Margin="60 0 40 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150"></ComboBox>
+                    <ComboBox Name="cmbFromCurrency" Width="170" Height="30" Margin="60 0 40 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150" SelectionChanged="cmbFromCurrency_SelectionChanged"  PreviewKeyDown="cmbFromCurrency_PreviewKeyDown"></ComboBox>
                     <fa:ImageAwesome Icon="Exchange" Height="30" Width="30" Foreground="White" VerticalAlignment="Top"></fa:ImageAwesome>
-                    <ComboBox Name="cmbToCurrency" Width="170" Height="30" Margin="40 0 0 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150"></ComboBox>
+                    <ComboBox Name="cmbToCurrency" Width="170" Height="30" Margin="40 0 0 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top" MaxDropDownHeight="150" SelectionChanged="cmbToCurrency_SelectionChanged" PreviewKeyDown="cmbToCurrency_PreviewKeyDown"></ComboBox>
                 </StackPanel>
 
                 <!-- Кнопки -->
@@ -135,7 +135,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Height="60" Width="800" VerticalAlignment="Bottom">
-                    <TextBox Name="txtAmount" Width="200" Height="30" Margin="180 0 0 0" PreviewTextInput="NumberValidationTextBox" PreviewKeyDown="txtCurrency_PreviewKeyDown" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
+                    <TextBox Name="txtAmount" Width="200" Height="30" Margin="180 0 0 0" PreviewTextInput="NumberValidationTextBox" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
                     <TextBox Name="txtCurrencyName" Width="200" Height="30" Margin="40 0 0 0" FontSize="18" VerticalContentAlignment="Center" VerticalAlignment="Top"></TextBox>
                 </StackPanel>
 
