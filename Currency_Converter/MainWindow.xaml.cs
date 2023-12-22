@@ -1,8 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,21 +17,90 @@ namespace Currency_Converter
     // Этот класс is partial потому что состоит из 2 частей - основной(окно) и придаточной(.cs файл)
     public partial class MainWindow : Window
     {
-        SqlConnection con = new SqlConnection();
-        SqlCommand cmd = new SqlCommand();
-        SqlDataAdapter adapter = new SqlDataAdapter();
+        private string apiToken = "d336d81f030b4f17a335a22e142d23e1";
+        private string httpRequest = $"https://openexchangerates.org/api/latest.json?app_id=YOUR_APP_ID";
+
+        private SqlConnection con = new SqlConnection();
+        private SqlCommand cmd = new SqlCommand();
+        private SqlDataAdapter adapter = new SqlDataAdapter();
+
+        private JsonRootStructure apiData = new JsonRootStructure();
 
         private int CurrencyId = 0;
         private double FromAmount = 0;
         private double ToAmount = 0;
+        
+        //private int[] numbers = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
         public MainWindow()
         {
             InitializeComponent();
+            GetApiData();
 
-            BindCurrency();
-            ReFresher();
+            //OddNumbers();
+            //var query = from number in numbers where number > 5 orderby number descending select number;
+            //foreach ( var item in query )
+            //{
+            //    MessageBox.Show( item.ToString() );
+            //}
+
+            //BindCurrency();
+            //ReFresher();
         }
+
+        //private void GetApiData()
+        //{
+        //    httpRequest = httpRequest.Replace("YOUR_APP_ID", apiToken);
+        //    HttpClient httpClient = new HttpClient();
+        //    var httpResonse = httpClient.GetAsync(httpRequest);
+        //}
+        
+        private async void GetApiData()
+        {
+            apiData = await GetApiData<JsonRootStructure>();
+            BindCurrency();
+        }
+
+        // Параллельное получение запросов
+        public async Task<JsonRootStructure> GetApiData<T>()
+        {
+            JsonRootStructure root = new JsonRootStructure();
+            try
+            {
+                using (HttpClient client = new HttpClient() ) 
+                {
+                    httpRequest = httpRequest.Replace("YOUR_APP_ID", apiToken);
+
+                    client.Timeout = TimeSpan.FromMinutes(1); // выставляем тайм-аут
+                    HttpResponseMessage responseMessage = await client.GetAsync(httpRequest);
+
+                    if (responseMessage.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string responceString = await responseMessage.Content.ReadAsStringAsync();
+                        JsonRootStructure responceObject = JsonConvert.DeserializeObject<JsonRootStructure>(responceString);
+
+                        MessageBox.Show("TimeStamp:" + responceObject.timestamp, "Information", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                        return responceObject;
+                    }
+
+                    return root; // пустой ответ 
+                }
+            }
+            catch (Exception ex)
+            {
+                return root; // пустой ответ 
+            }
+        }
+
+        //private void OddNumbers()
+        //{
+        //    IEnumerable<int> oddNumbers = from number in numbers where number % 2 != 0 select number;
+        //    foreach (int i in oddNumbers)
+        //    {
+        //        MessageBox.Show(i.ToString());
+        //    }
+        //}
 
         // CRUD - Create, Read, Update, Delete
 
@@ -46,39 +120,39 @@ namespace Currency_Converter
         {
             double сonvertedValue; // переменная для хранения введенного количества валют
 
-            if (txtCurrency.Text.Trim() == "")
+            if (txtCurrency2.Text.Trim() == "")
             {
                 MessageBox.Show("Please Enter Currency", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                txtCurrency.Focus();  // поставить фокус на поле ввода валюты
+                txtCurrency2.Focus();  // поставить фокус на поле ввода валюты
 
                 return;
             }
-            else if (cmbFromCurrency.SelectedIndex == 0)
+            else if (cmbFromCurrency2.SelectedIndex == 0)
             {
                 MessageBox.Show("Please Select Currency From", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                cmbFromCurrency.Focus();
+                cmbFromCurrency2.Focus();
 
                 return;
             }
-            else if (cmbToCurrency.SelectedIndex == 0)
+            else if (cmbToCurrency2.SelectedIndex == 0)
             {
                 MessageBox.Show("Please Select Currency To", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-                cmbToCurrency.Focus();
+                cmbToCurrency2.Focus();
 
                 return;
             }
 
-            if(cmbFromCurrency.Text == cmbToCurrency.Text)
+            if(cmbFromCurrency2.Text == cmbToCurrency2.Text)
             {
-                сonvertedValue = double.Parse(txtCurrency.Text);
+                сonvertedValue = double.Parse(txtCurrency2.Text);
 
                 // N3 - формат дробого числа с 3-мя числами после запятой; по дефолту добавит три нуля после запятой
-                lblCurrency.Content = cmbToCurrency.Text + " " + сonvertedValue.ToString("N3");
+                lblCurrency.Content = cmbToCurrency2.Text + " " + сonvertedValue.ToString("N3");
             }
             else
             {
-                сonvertedValue = FromAmount * double.Parse(txtCurrency.Text) / ToAmount;
-                lblCurrency.Content = cmbToCurrency.Text + " " + сonvertedValue.ToString("N3");
+                сonvertedValue = FromAmount * double.Parse(txtCurrency2.Text) / ToAmount;
+                lblCurrency.Content = cmbToCurrency2.Text + " " + сonvertedValue.ToString("N3");
             }
         }
 
@@ -133,6 +207,53 @@ namespace Currency_Converter
             cmbToCurrency.DisplayMemberPath = "CurrencyName";
             cmbToCurrency.SelectedValuePath = "Id";
             cmbToCurrency.SelectedIndex = 0;
+
+            //=====================================================================================
+            // Вкладка API
+
+            DataTable dataTableApi = new DataTable();
+            dataTableApi.Columns.Add("CurrencyName");
+            dataTableApi.Columns.Add("Value");
+
+            dataTableApi.Rows.Add("--SELECT--", 0);
+
+            //GetApiData();
+
+            dataTableApi.Rows.Add("AED", apiData.rates.AED);
+            dataTableApi.Rows.Add("AUD", apiData.rates.AUD);
+            dataTableApi.Rows.Add("BGN", apiData.rates.BGN);
+            dataTableApi.Rows.Add("BTC", apiData.rates.BTC);
+            dataTableApi.Rows.Add("BYN", apiData.rates.BYN);
+            dataTableApi.Rows.Add("BYR", apiData.rates.BYR);
+            dataTableApi.Rows.Add("CAD", apiData.rates.CAD);
+            dataTableApi.Rows.Add("CNH", apiData.rates.CNH);
+            dataTableApi.Rows.Add("CZK", apiData.rates.CZK);
+            dataTableApi.Rows.Add("EUR", apiData.rates.EUR);
+            dataTableApi.Rows.Add("GBP", apiData.rates.GBP);
+            dataTableApi.Rows.Add("HKD", apiData.rates.HKD);
+            dataTableApi.Rows.Add("INR", apiData.rates.INR);
+            dataTableApi.Rows.Add("JPY", apiData.rates.JPY);
+            dataTableApi.Rows.Add("KPW", apiData.rates.KPW);
+            dataTableApi.Rows.Add("KRW", apiData.rates.KRW);
+            dataTableApi.Rows.Add("KZT", apiData.rates.KZT);
+            dataTableApi.Rows.Add("PLN", apiData.rates.PLN);
+            dataTableApi.Rows.Add("RUB", apiData.rates.RUB);
+            dataTableApi.Rows.Add("THB", apiData.rates.THB);
+            dataTableApi.Rows.Add("TRY", apiData.rates.TRY);
+            dataTableApi.Rows.Add("UAH", apiData.rates.UAH);
+            dataTableApi.Rows.Add("USD", apiData.rates.USD);
+
+            cmbFromCurrency2.ItemsSource = dataTableApi.DefaultView;
+            cmbToCurrency2.ItemsSource = dataTableApi.DefaultView;
+
+            // делаем привязку объекта таблицы к combobox
+            cmbFromCurrency2.DisplayMemberPath = "CurrencyName"; // визуальное представление объекта
+            cmbFromCurrency2.SelectedValuePath = "Value"; // значение объекта
+            cmbFromCurrency2.SelectedIndex = 0; // задаем первичное значение combobox
+
+            cmbToCurrency2.DisplayMemberPath = "CurrencyName";
+            cmbToCurrency2.SelectedValuePath = "Value";
+            cmbToCurrency2.SelectedIndex = 0;
         }
 
         private void NumberValidationTextBox(object sendetr, TextCompositionEventArgs e)
@@ -373,6 +494,67 @@ namespace Currency_Converter
             {
                 cmbToCurrency_SelectionChanged(sender, null);
             }
+        }
+
+        private void Convert2_Click(object sender, RoutedEventArgs e)
+        {
+            double сonvertedValue; // переменная для хранения введенного количества валют
+
+            if (txtCurrency2.Text.Trim() == "")
+            {
+                MessageBox.Show("Please Enter Currency", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                txtCurrency2.Focus();  // поставить фокус на поле ввода валюты
+
+                return;
+            }
+            else if (cmbFromCurrency2.SelectedIndex == 0)
+            {
+                MessageBox.Show("Please Select Currency From", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                cmbFromCurrency2.Focus();
+
+                return;
+            }
+            else if (cmbToCurrency2.SelectedIndex == 0)
+            {
+                MessageBox.Show("Please Select Currency To", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                cmbToCurrency2.Focus();
+
+                return;
+            }
+
+            if (cmbFromCurrency2.Text == cmbToCurrency2.Text)
+            {
+                сonvertedValue = double.Parse(txtCurrency2.Text);
+
+                // N3 - формат дробого числа с 3-мя числами после запятой; по дефолту добавит три нуля после запятой
+                lblCurrency2.Content = cmbToCurrency2.Text + " " + сonvertedValue.ToString("N3");
+            }
+            else
+            {
+                сonvertedValue = ToAmount * double.Parse(txtCurrency2.Text) / FromAmount;
+                lblCurrency2.Content = cmbToCurrency2.Text + " " + сonvertedValue.ToString("N3");
+            }
+        }
+
+        private void Clear2_Click(object sender, RoutedEventArgs e)
+        {
+            txtCurrency2.Text = string.Empty;
+            //txtCurrencyName2.Text = string.Empty;
+            btnSave.Content = "Save";
+            //GetData();
+            //CurrencyId = 0;
+            BindCurrency();
+            txtCurrency2.Focus();
+        }
+
+        private void cmbFromCurrency2_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            FromAmount = double.Parse(cmbFromCurrency2.SelectedValue.ToString());
+        }
+
+        private void cmbToCurrency2_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ToAmount = double.Parse(cmbToCurrency2.SelectedValue.ToString()); ;
         }
     }
 }
